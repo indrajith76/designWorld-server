@@ -1,6 +1,6 @@
 const express = require("express");
 require("dotenv").config();
-const { MongoClient } = require("mongodb");
+const { MongoClient, ObjectId } = require("mongodb");
 const app = express();
 const cors = require("cors");
 const e = require("express");
@@ -17,6 +17,7 @@ async function run() {
     const database = client.db("designWorldDB");
     const servicesCollection = database.collection("services");
     const usersCollection = database.collection("allUser");
+    const allOrderRequestCollection = database.collection("AllOrderRequest");
 
     app.get("/roleOfUser/:email", async (req, res) => {
       const email = req.params.email;
@@ -45,8 +46,50 @@ async function run() {
       }
     });
 
+    app.get("/services/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await servicesCollection.findOne(query);
+      res.send(result);
+    });
+
     app.get("/services", async (req, res) => {
       const result = await servicesCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.delete("/myOrderList/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const result = await allOrderRequestCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.get("/myOrderList/:email", async (req, res) => {
+      const email = req.params.email;
+      const result = await allOrderRequestCollection
+        .find({ email: email })
+        .toArray(); 
+      res.send(result);
+    });
+
+    app.get("/AllOrderList", async (req, res) => {});
+
+    app.post("/AllOrderList", async (req, res) => {
+      const {
+        userName,
+        email,
+        serviceName,
+        serviceId,
+        price,
+        deliveryLocation,
+      } = req.body;
+      const result = await allOrderRequestCollection.insertOne({
+        userName,
+        email,
+        serviceName,
+        serviceId,
+        price,
+        deliveryLocation,
+      });
       res.send(result);
     });
   } finally {
