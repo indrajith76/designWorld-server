@@ -30,6 +30,16 @@ async function run() {
       res.send(result);
     });
 
+    app.put("/users/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await usersCollection.updateOne(
+        { _id: new ObjectId(id) },
+        { $set: { role: "banned" } },
+        { upsert: true }
+      );
+      res.send(result);
+    });
+
     app.post("/users", async (req, res) => {
       const query = { email: req.body.email };
       const status = await usersCollection.findOne(query);
@@ -54,6 +64,17 @@ async function run() {
 
     app.get("/services", async (req, res) => {
       const result = await servicesCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.put("/services/:id", async (req, res) => {
+      const query = { _id: new ObjectId(req.params.id) };
+      const data = req.body;
+      const result = await servicesCollection.updateOne(
+        query,
+        { $set: data },
+        { upsert: true }
+      ); 
       res.send(result);
     });
 
@@ -84,7 +105,42 @@ async function run() {
     });
 
     app.get("/AllOrderList", async (req, res) => {
-      const result = await allOrderRequestCollection.find({}).toArray();
+      const searchEmail = req.query?.email;
+      const searchServiceName = req.query?.serviceName;
+      const searchDeliveryLocation = req.query?.location;
+      let result;
+      if (searchEmail || searchServiceName || searchDeliveryLocation) {
+        if (searchEmail) {
+          result = await allOrderRequestCollection
+            .find({ email: searchEmail })
+            .toArray();
+        } else if (searchServiceName) {
+          const temp = await allOrderRequestCollection.find({}).toArray();
+          result = temp.filter(
+            (t) =>
+              t.serviceName.split(" ")[0] == searchServiceName.split(" ")[0]
+          );
+        } else {
+          result = await allOrderRequestCollection
+            .find({ deliveryLocation: searchDeliveryLocation })
+            .toArray();
+        }
+      } else {
+        result = await allOrderRequestCollection.find({}).toArray();
+      }
+
+      res.send(result);
+    });
+
+    app.put("/AllOrderList/:id", async (req, res) => {
+      const id = req.params.id;
+      const result = await allOrderRequestCollection.updateOne(
+        {
+          _id: new ObjectId(id),
+        },
+        { $set: { status: true } },
+        { upsert: true }
+      );
       res.send(result);
     });
 
